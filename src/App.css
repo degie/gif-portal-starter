@@ -45,6 +45,10 @@ img {
   margin-bottom: 3em;
 }
 
+.username-container {
+  padding-top: 1em;
+}
+
 .sub-text {
   font-size: 25px;
   margin-bottom: 0;
@@ -109,42 +113,60 @@ img {
 }
 
 .nft-table {
-  display: table;
+  text-align: right;
+  margin-bottom: 2em;
+  border-spacing: 0;
   width: 100%;
-  margin: 0;
-  padding: 0;
-  text-align: left;
-
 }
-
-.nft-table .nft-item {
+.nft-table tr.divider {
   display: block;
-  margin-bottom: 1em;
+  height: 5px;
 }
 
-.nft-item > * {
-  display: table-cell;
+.nft-table .nft-item > * {
+  padding: 0 0.5em;
+}
+
+.nft-table .nft-item .item-name {
+  text-align: left;
+}
+.nft-table .nft-item .item-name > * {
   vertical-align: middle;
+}
+.nft-table tbody tr.nft-item td {
+  padding: 0.5em;
+}
+.nft-table tbody tr.nft-item:hover {
+  background-color: rgba(255,255,255,0.05);
 }
 
 .nft-item img {
   width: auto;
   height: 50px;
-  border-radius: 10px;
-}
-
-.nft-item .item-img {
-  width: 60px;
-}
-.nft-item .item-name {
-  padding-left: 1em;
+  border-radius: 15px;
+  margin-right: .5em;
 }
 
 .nft-item.table-header {
   opacity: .6;
   font-size: .9em;
-  border-bottom: 1px solid #535353;
-  padding-bottom: 1em;
+  height: 40px;
+}
+
+.nft-item.table-header th {
+  font-weight: normal;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.nft-item.table-header th.item-name {
+  text-align: left;
+}
+
+
+.form-container {
+  max-width: 500px;
+  display: inline-block;
+  font-size: .9em;
 }
 
 input[type='text'] {
