@@ -1,8 +1,26 @@
+/*
+Commands
+
+Update idl after redeploy the Solana program
+anchor build
+ */
+
 import {useEffect, useState} from 'react';
 import twitterLogo from './assets/twitter-logo.svg';
+import idl from './idl.json';
+import kp from './keypair.json';
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Program, Provider, web3 } from '@project-serum/anchor';
 import './App.css';
 
 // Constants
+const programID = new PublicKey(idl.metadata.address);
+const network = clusterApiUrl('devnet');
+// Controls how we want to acknowledge when a transaction is "done".
+const opts = {
+    preflightCommitment: "processed"
+};
+const { SystemProgram, Keypair } = web3;
 const TWITTER_HANDLE = 'kittiecrypto';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 const TEST_NFTS = [
@@ -10,7 +28,14 @@ const TEST_NFTS = [
     'https://media0.giphy.com/media/4oXQFWY1WRAxCAbS2H/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g',
     'https://media0.giphy.com/media/xxBBZgE1XpreXSsNPz/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g',
     'https://media1.giphy.com/media/KluRpaqe0ZyyFRfDzi/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g'
-]
+];
+
+// Lets
+const arr = Object.values(kp._keypair.secretKey);
+const secret = new Uint8Array(arr);
+const baseAccount = web3.Keypair.fromSecretKey(secret);
+
+let nftCount = 0;
 
 const App = () => {
 
@@ -75,12 +100,28 @@ const App = () => {
         }
     };
     const saveNft = async () => {
-        if (inputNftValue.length > 0) {
-            console.log('URL:', inputNftValue);
-            setNftList([...nftList, inputNftValue]);
-            setInputNftValue('');
-        } else {
-            console.log('Empty input URL. Try again.');
+        if (inputNftValue.length === 0) {
+            console.log("No NFT link given!")
+            return
+        }
+        setInputNftValue('');
+        console.log('URL:', inputNftValue);
+
+        try {
+            const provider = getProvider();
+            const program = new Program(idl, programID, provider);
+
+            await program.rpc.addNft(inputNftValue, {
+                accounts: {
+                    baseAccount: baseAccount.publicKey,
+                    user: provider.wallet.publicKey,
+                },
+            });
+            console.log("NFT successfully sent to program", inputNftValue);
+
+            await getNftList();
+        } catch (error) {
+            console.log("Error sending NFT:", error)
         }
     };
     const onInputNameChange = (event) => {
@@ -91,6 +132,33 @@ const App = () => {
         const {value} = event.target;
         setInputNftValue(value);
     };
+    const getProvider = () => {
+        const connection = new Connection(network, opts.preflightCommitment);
+        const provider = new Provider(
+            connection, window.solana, opts.preflightCommitment,
+        );
+        return provider;
+    }
+    const createNftAccount = async () => {
+        try {
+            const provider = getProvider();
+            const program = new Program(idl, programID, provider);
+            console.log("ping")
+            await program.rpc.initialize({
+                accounts: {
+                    baseAccount: baseAccount.publicKey,
+                    user: provider.wallet.publicKey,
+                    systemProgram: SystemProgram.programId,
+                },
+                signers: [baseAccount]
+            });
+            console.log("Created a new BaseAccount w/ address:", baseAccount.publicKey.toString())
+            await getNftList();
+
+        } catch(error) {
+            console.log("Error creating BaseAccount account:", error)
+        }
+    }
 
     /*
      * We want to render this UI when the user hasn't connected
@@ -124,38 +192,52 @@ const App = () => {
         </div>
     );
 
-    const renderConnectedContainer = () => (
-        <div className="connected-container">
-            <div className="add-nft-container">
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        saveNft()
-                    }}>
-                    <input type="text" name="nftValue" placeholder="Add NFT URL" value={inputNftValue}
-                           onChange={onInputNftChange}/>
-                    <button type="submit" className="cta-button submit-button">Add</button>
-                </form>
-            </div>
-            <table className="nft-table">
-                <thead className="nft-item table-header">
-                    <tr>
-                        <th className="item-name">Item</th>
-                        <th className="item-price">Acquisition Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <tr className="divider"><td>&nbsp;</td></tr>
-                {nftList.map(nft => (
-                    <tr className="nft-item" key={nft}>
-                        <td className="item-name"><img src={nft} alt={nft}/> <span>Lucaionescuart GIF</span></td>
-                        <td className="item-price">1 SOL</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
-    );
+    const renderConnectedContainer = () => {
+        if (nftList === null) {
+            return (
+                <div className="connected-container">
+                    <button className="cta-button submit-nft-button" onClick={createNftAccount}>
+                        Do One-Time Initialization For NFT Program Account
+                    </button>
+                </div>
+            )
+        } else {
+            return(
+                <div className="connected-container">
+                    <div className="add-nft-container">
+                        <form
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                saveNft()
+                            }}>
+                            <input type="text" name="nftValue" placeholder="Add NFT URL" value={inputNftValue}
+                                   onChange={onInputNftChange}/>
+                            <button type="submit" className="cta-button submit-button">Add</button>
+                        </form>
+                    </div>
+                    <table className="nft-table">
+                        <thead className="nft-item table-header">
+                        <tr>
+                            <th className="item-name">Item</th>
+                            <th className="item-price">Acquisition Price</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr className="divider">
+                            <td>&nbsp;</td>
+                        </tr>
+                        {nftList.map(nft => (
+                            <tr className="nft-item" key={nftCount+=1}>
+                                <td className="item-name"><img src={nft.nftLink} alt={nft.userAddress.toString()}/> <span>Lucaionescuart GIF</span></td>
+                                <td className="item-price">1 SOL</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            )
+        }
+    };
 
     /*
      * When our component first mounts, let's check to see if we have a connected
@@ -169,14 +251,26 @@ const App = () => {
         return () => window.removeEventListener('load', onLoad);
     }, []);
 
+    const getNftList = async() => {
+        try {
+            const provider = getProvider();
+            const program = new Program(idl, programID, provider);
+            const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+
+            console.log("Got the account", account)
+            setNftList(account.nftList)
+
+        } catch (error) {
+            console.log("Error in getGifList: ", error)
+            setNftList(null);
+        }
+    }
+
+
     useEffect(() => {
         if (walletAddress) {
             console.log('Fetching NFT list...');
-
-            // Call Solana program here.
-
-            // Set state
-            setNftList(TEST_NFTS);
+            getNftList()
         }
     }, [walletAddress]);
 
@@ -184,7 +278,7 @@ const App = () => {
         <div className="App">
             <div className={walletAddress ? 'authed-container' : 'container'}>
                 <div className="header-container">
-                    <p className="header">NFT wallet</p>
+                    <p className="header">NFT wallet <small>working on Devnet</small></p>
                     {walletAddress && !userName && renderSetNameInput()}
                     {userName && renderUserNameContainer()}
                     <p className="sub-text">
