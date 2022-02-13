@@ -20,15 +20,9 @@ const network = clusterApiUrl('devnet');
 const opts = {
     preflightCommitment: "processed"
 };
-const { SystemProgram, Keypair } = web3;
+const { SystemProgram } = web3;
 const TWITTER_HANDLE = 'kittiecrypto';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
-const TEST_NFTS = [
-    'https://media3.giphy.com/media/k0IRv7HUUqL3BJqYbI/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g',
-    'https://media0.giphy.com/media/4oXQFWY1WRAxCAbS2H/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g',
-    'https://media0.giphy.com/media/xxBBZgE1XpreXSsNPz/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g',
-    'https://media1.giphy.com/media/KluRpaqe0ZyyFRfDzi/200w.webp?cid=ecf05e47x3bv5upff2ho1grerxoqyp4pbcu0khbo1yw0vtxx&rid=200w.webp&ct=g'
-];
 
 // Lets
 const arr = Object.values(kp._keypair.secretKey);
@@ -134,11 +128,10 @@ const App = () => {
     };
     const getProvider = () => {
         const connection = new Connection(network, opts.preflightCommitment);
-        const provider = new Provider(
+        return new Provider(
             connection, window.solana, opts.preflightCommitment,
         );
-        return provider;
-    }
+    };
     const createNftAccount = async () => {
         try {
             const provider = getProvider();
@@ -257,14 +250,14 @@ const App = () => {
             const program = new Program(idl, programID, provider);
             const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
 
-            console.log("Got the account", account)
+            console.log("Got the account", account);
             setNftList(account.nftList)
 
         } catch (error) {
-            console.log("Error in getGifList: ", error)
+            console.log("Error in getGifList: ", error);
             setNftList(null);
         }
-    }
+    };
 
 
     useEffect(() => {
@@ -272,6 +265,7 @@ const App = () => {
             console.log('Fetching NFT list...');
             getNftList()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletAddress]);
 
     return (
