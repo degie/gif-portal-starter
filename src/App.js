@@ -3,14 +3,17 @@ Commands
 
 Update idl after redeploy the Solana program
 anchor build
+
+Airdrop Solana to Devnet wallet
+solana airdrop 2 7fP7SQX1CjNqafqnjaqx5TqbbLhT38JJH6P8EPHspik7 --url devnet
  */
 
 import {useEffect, useState} from 'react';
 import twitterLogo from './assets/twitter-logo.svg';
 import idl from './idl.json';
 import kp from './keypair.json';
-import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
-import { Program, Provider, web3 } from '@project-serum/anchor';
+import {Connection, PublicKey, clusterApiUrl} from '@solana/web3.js';
+import {Program, Provider, web3} from '@project-serum/anchor';
 import './App.css';
 
 // Constants
@@ -20,7 +23,7 @@ const network = clusterApiUrl('devnet');
 const opts = {
     preflightCommitment: "processed"
 };
-const { SystemProgram } = web3;
+const {SystemProgram} = web3;
 const TWITTER_HANDLE = 'kittiecrypto';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
@@ -148,7 +151,7 @@ const App = () => {
             console.log("Created a new BaseAccount w/ address:", baseAccount.publicKey.toString())
             await getNftList();
 
-        } catch(error) {
+        } catch (error) {
             console.log("Error creating BaseAccount account:", error)
         }
     }
@@ -190,12 +193,12 @@ const App = () => {
             return (
                 <div className="connected-container">
                     <button className="cta-button submit-nft-button" onClick={createNftAccount}>
-                        Do One-Time Initialization For NFT Program Account
+                        Do One-Time Initialization For Solana Program Account
                     </button>
                 </div>
             )
         } else {
-            return(
+            return (
                 <div className="connected-container">
                     <div className="add-nft-container">
                         <form
@@ -211,7 +214,7 @@ const App = () => {
                     <table className="nft-table">
                         <thead className="nft-item table-header">
                         <tr>
-                            <th className="item-name">Item</th>
+                            <th className="item-name">Wallet</th>
                             <th className="item-price">Acquisition Price</th>
                         </tr>
                         </thead>
@@ -219,9 +222,11 @@ const App = () => {
                         <tr className="divider">
                             <td>&nbsp;</td>
                         </tr>
+                        {nftList.length === 0 && renderEmptyInfo()}
                         {nftList.map(nft => (
-                            <tr className="nft-item" key={nftCount+=1}>
-                                <td className="item-name"><img src={nft.nftLink} alt={nft.userAddress.toString()}/> <span>Lucaionescuart GIF</span></td>
+                            <tr className="nft-item" key={nftCount += 1}>
+                                <td className="item-name"><img src={nft.nftLink} alt={nft.userAddress.toString()}/>
+                                    <span>{nft.userAddress.toString()}</span></td>
                                 <td className="item-price">1 SOL</td>
                             </tr>
                         ))}
@@ -232,6 +237,13 @@ const App = () => {
         }
     };
 
+    const renderEmptyInfo = () => {
+        return (
+            <tr>
+                <td><br/>No NFT detected for your wallet!</td>
+            </tr>
+        )
+    };
     /*
      * When our component first mounts, let's check to see if we have a connected
      * Phantom Wallet
@@ -244,17 +256,20 @@ const App = () => {
         return () => window.removeEventListener('load', onLoad);
     }, []);
 
-    const getNftList = async() => {
+    const getNftList = async () => {
         try {
             const provider = getProvider();
             const program = new Program(idl, programID, provider);
             const account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+            const accountNftList = account.nftList;
 
-            console.log("Got the account", account);
-            setNftList(account.nftList)
+            var userNfts = accountNftList.filter(nft => {
+                return nft.userAddress.toString() === walletAddress
+            });
+            setNftList(userNfts)
 
         } catch (error) {
-            console.log("Error in getGifList: ", error);
+            console.log("Error in getNftList: ", error);
             setNftList(null);
         }
     };
