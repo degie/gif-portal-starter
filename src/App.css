@@ -119,7 +119,7 @@ img {
 }
 
 .nft-table {
-  text-align: right;
+  text-align: left;
   margin-bottom: 2em;
   border-spacing: 0;
   width: 100%;
@@ -133,8 +133,8 @@ img {
   padding: 0 0.5em;
 }
 
-.nft-table .nft-item .item-name {
-  text-align: left;
+.nft-table .nft-item .item-price {
+  text-align: right;
 }
 .nft-table .nft-item .item-name > * {
   vertical-align: middle;
@@ -162,6 +162,7 @@ img {
 .nft-item.table-header th {
   font-weight: normal;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 0.5em;
 }
 
 .nft-item.table-header th.item-name {
